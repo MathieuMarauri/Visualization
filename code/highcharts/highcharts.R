@@ -5,7 +5,7 @@
 
 library("data.table")
 library("highcharter")
-source("functions.R")
+source("code/highcharts/functions.R")
 
 
 # Column and bar chart data -------------------------------------------------------------------
