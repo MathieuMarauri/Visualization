@@ -453,3 +453,228 @@ setNames(as.data.frame(rbind(
   c(-5.2, 10.4),
   c(-13.5, 9.8)
 )), c("low", "high"))
+
+
+# Pie chart with predefined labels ------------------------------------------------------------
+
+data_plot <- data.table(name = letters[1:5],
+                        y = round(runif(n = 5), digits = 1),
+                        labels = round(runif(n = 5, min = -5, max = 5), digits = 1))
+
+highchart() %>%
+  hc_chart(type = "pie") %>%
+  hc_add_series(data = data_plot,
+                dataLabels = list(format = "{point.y} ({point.labels} N-1)"),
+                enabled = TRUE) %>%
+  hc_plotOptions(pie = list(showInLegend = TRUE))
+
+
+# Funnel plot bubble like  ------------------------------------------------------------------
+
+data_plot <- data.table(name = paste0("step", 1:3),
+                        x = 0:2,
+                        y = 1,
+                        z = c(100, 20, 10),
+                        percent = c(100, 20, 50),
+                        nb_indiv = c(2000, 1000, 200))
+
+data_plot1 <- data.table(name = paste0("step", 1:3),
+                         x = 0:2,
+                         y = 2,
+                         z = c(100, 20, 10),
+                         percent = c(100, 20, 50),
+                         nb_indiv = c(2000, 1000, 200))
+
+list_plot <- c(list_parse(data_plot), list(NA), list_parse(data_plot1))
+list_plot <- c(list_parse(data_plot), list_parse(data_plot1))
+
+highchart() %>%
+  hc_chart(type = "bubble",
+           inverted = TRUE) %>%
+  hc_xAxis(categories = data_plot$name,
+           gridLineDashStyle = "dash",
+           gridLineWidth = 1,
+           lineWidth = 0,
+           tickWidth = 0,
+           tickmarkPlacement = 'on') %>%
+  hc_yAxis(visible = FALSE) %>%
+  hc_add_series(data = list_plot) %>%
+  hc_plotOptions(bubble = list(lineWidth = 2,
+                               minSize = "15%",
+                               maxSize = "30%",
+                               showInLegend = FALSE,
+                               marker = list(fillColor = NULL,
+                                             fillOpacity = 1),
+                               dataLabels = list(enabled = TRUE,
+                                                 formatter = JS('function(){
+                                                      if(this.point.x == 0) {
+                                                        return this.point.nb_indiv;
+                                                      } else{
+                                                        return this.point.percent + "%";
+                                                      }
+                                                 }'),
+                                                 style = list(textOutline = 'none'),
+                                                 inside = TRUE,
+                                                 align = "center"))) %>%
+  hc_tooltip(useHTML = TRUE,
+             headerFormat = "<table>",
+             pointFormat = paste("<tr>
+                                      <th>{point.name} :</th>
+                                 </tr>",
+                                 "<tr>
+                                      <td>{point.percent}%</td>
+                                 </tr>"),
+             footerFormat = "</table>")
+
+
+data_plot <- data.table(name = paste0("step", 1:3),
+                        x = 0:2,
+                        y = 0,
+                        z = c(100, 20, 10),
+                        percent = c(100, 20, 50),
+                        nb_indiv = c(2000, 1000, 200))
+
+data_plot1 <- data.table(name = paste0("step", 1:3),
+                         x = 0:2,
+                         y = 1,
+                         z = c(100, 20, 10),
+                         percent = c(100, 20, 50),
+                         nb_indiv = c(2000, 1000, 200))
+
+data_plot2 <- data.table(name = paste0("step", 1:3),
+                         x = 0:2,
+                         y = 2,
+                         z = c(100, 20, 10),
+                         percent = c(100, 20, 50),
+                         nb_indiv = c(2000, 1000, 200))
+
+data_plot3 <- data.table(name = paste0("step", 1:3),
+                         x = 0:2,
+                         y = 3,
+                         z = c(100, 20, 10),
+                         percent = c(100, 20, 50),
+                         nb_indiv = c(2000, 1000, 200))
+
+highchart() %>%
+  hc_chart(type = "bubble",
+           inverted = TRUE) %>%
+  hc_xAxis(categories = data_plot$name,
+           gridLineDashStyle = "dash",
+           gridLineWidth = 1,
+           lineWidth = 0,
+           tickWidth = 0,
+           tickmarkPlacement = 'on') %>%
+  hc_yAxis(
+    categories = c("global", "model1", "model2", "model3"),
+    gridLineWidth = 0,
+    lineWidth = 0,
+    tickWidth = 0,
+    showFirstLabel = FALSE,
+    showLastLabel = FALSE,
+    opposite = TRUE
+  ) %>%
+  hc_add_series(data = data_plot) %>%
+  hc_add_series(data = data_plot1) %>%
+  hc_add_series(data = data_plot2) %>%
+  hc_add_series(data = data_plot3) %>%
+  hc_plotOptions(bubble = list(lineWidth = 2,
+                               minSize = "15%",
+                               maxSize = "30%",
+                               showInLegend = FALSE,
+                               marker = list(fillColor = NULL,
+                                             fillOpacity = 1),
+                               dataLabels = list(enabled = TRUE,
+                                                 formatter = JS('function(){
+                                                      if(this.point.x == 0) {
+                                                        return this.point.nb_indiv;
+                                                      } else{
+                                                        return this.point.percent + "%";
+                                                      }
+                                                 }'),
+                                                 style = list(textOutline = 'none'),
+                                                 inside = TRUE,
+                                                 align = "center"))) %>%
+  hc_tooltip(useHTML = TRUE,
+             headerFormat = "<table>",
+             pointFormat = paste("<tr>
+                                      <th>{point.name} :</th>
+                                 </tr>",
+                                 "<tr>
+                                      <td>{point.nb_indiv} leads</td>
+                                 </tr>"),
+             footerFormat = "</table>")
+
+
+# Solid gauge ---------------------------------------------------------------------------------
+
+highchart(width = '100%', height = '100%') %>%
+  hc_chart(type = "solidgauge",
+           spacing = 0) %>%
+  hc_title(text = "Activity",
+           style = list(fontSize = "24px")) %>%
+  hc_tooltip(borderWidth = 0,
+             backgroundColor = 'none',
+             shadow = FALSE,
+             style = list(fontSize = '16px'),
+             pointFormat = '{series.name}<br><span style="font-size:2em; color: {point.color}; font-weight: bold">{point.y}%</span>',
+             positioner = JS("function (labelWidth, labelHeight) {return {x: 200 - labelWidth / 2,y: 120%};}")
+  ) %>%
+  hc_pane(startAngle = 0,
+          endAngle = 360,
+          background = list(
+            list(outerRadius = '112%',
+                 innerRadius = '88%',
+                 backgroundColor = JS("Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0.1).get()"),
+                 borderWidth =  0),
+            list(outerRadius = '87%',
+                 innerRadius = '63%',
+                 backgroundColor = JS("Highcharts.Color(Highcharts.getOptions().colors[1]).setOpacity(0.1).get()"),
+                 borderWidth = 0),
+            list(outerRadius = '62%',
+                 innerRadius =  '38%',
+                 backgroundColor = JS("Highcharts.Color(Highcharts.getOptions().colors[2]).setOpacity(0.1).get()"),
+                 borderWidth = 0))) %>%
+  hc_yAxis(min = 0,
+           max = 100,
+           lineWidth = 0,
+           tickPositions = list()) %>%
+  hc_plotOptions(solidgauge = list(borderWidth = '34px',
+                                   dataLabels = list(enabled = FALSE,
+                                                     verticalAlign = 'bottom',
+                                                     align = 'center'),
+                                   linecap = 'round',
+                                   stickyTracking = FALSE)) %>%
+  hc_add_series(name = "Move",
+                borderColor = JS("Highcharts.getOptions().colors[0]"),
+                data = list(list(color = JS("Highcharts.getOptions().colors[0]"),
+                                 radius = "100%",
+                                 innerRadius = "100%",
+                                 y = 80))) %>%
+  hc_add_series(name = "Exercise",
+                borderColor = JS("Highcharts.getOptions().colors[1]"),
+                data = list(list(color = JS("Highcharts.getOptions().colors[1]"),
+                                 radius = "75%",
+                                 innerRadius = "75%",
+                                 y = 65))) %>%
+  hc_add_series(name = "Stand",
+                borderColor = JS("Highcharts.getOptions().colors[2]"),
+                data = list(list(color = JS("Highcharts.getOptions().colors[2]"),
+                                 radius = "50%",
+                                 innerRadius = "50%",
+                                 y = 50)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
