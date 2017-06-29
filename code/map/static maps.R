@@ -1,6 +1,5 @@
 
 # Examples of maps using R. Each section is self contained.
-# The process to get the data can then be duplicated from one section to the other.
 
 # to retrieve shape file by country: http://www.gadm.org/country
 
@@ -8,7 +7,6 @@
 
 library("data.table")
 library("ggplot2")
-# library("RColorBrewer")
 
 
 # Simple world map ----------------------------------------------------------------------------
@@ -236,6 +234,24 @@ ggplot(data = shape_idf_df, mapping = aes(x = long, y = lat, group = group)) +
         plot.background = element_rect(fill = "transparent", colour = NA))
 
 rm(shape_idf_df, idf_centroid_df, img, shape_df, departement_centroid_df, population_dt, shape_sdf)
+
+
+# Density map ---------------------------------------------------------------------------------
+
+data_map <- fread('input/vilnius_point.csv')
+
+map <- ggmap::get_map(location = "Vilnius",
+                      zoom = 14,
+                      maptype = "terrain",
+                      source = "google",
+                      color = "color")
+ggmap::ggmap(map) +
+  stat_density2d(data = data_map,
+                 mapping = aes(x = Y,
+                               y = X,
+                               fill = ..level..),
+                 alpha = 0.5,
+                 geom = "polygon")
 
 
 # Subplots in map -----------------------------------------------------------------------------
@@ -494,3 +510,5 @@ typ <-  basemap +
               plot.caption = element_text(size = 12))
 
 ggsave(filename = "map.png", typ, width = 6.5, height = 8, dpi = 300)
+
+
