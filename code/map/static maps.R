@@ -2,11 +2,14 @@
 # Examples of maps using R. Each section is self contained.
 
 # to retrieve shape file by country: http://www.gadm.org/country
+# geojson for France : https://github.com/gregoiredavid/france-geojson
 
 # Packages ------------------------------------------------------------------------------------
 
 library("data.table")
 library("ggplot2")
+library("osmplotr") # for osm plots section
+import::from("magrittr", "%>%")
 
 
 # Simple world map ----------------------------------------------------------------------------
@@ -22,7 +25,7 @@ cities <- cities[order(-pop), ][1:100, ]
 
 # fortify the spatial polygon to a data frame by ISO2
 world <- fortify(wrld_simpl, region = "ISO2")
-world <- setDT(world)[!id %in% c("AQ", "GL"), ] # we don't  need Antarctica and Grennland
+world <- setDT(world)[!id %in% c("AQ", "GL"), ] # we don't need Antarctica and Grennland
 
 # map
 ggplot() +
@@ -252,6 +255,54 @@ ggmap::ggmap(map) +
                                fill = ..level..),
                  alpha = 0.5,
                  geom = "polygon")
+
+
+# osm plots -----------------------------------------------------------------------------------
+
+# extract data, list of all key-value : http://wiki.openstreetmap.org/wiki/Map_Features
+
+# Paris map
+# paris_box <- osmdata::getbb("Paris")
+paris_box <- get_bbox(c(2.22, 48.81, 2.41, 48.9))
+
+# park
+paris_park <- extract_osm_objects(
+  key = 'leisure',
+  value = 'park',
+  bbox = paris_box,
+  geom_only = TRUE
+)
+
+# river
+paris_waterway <- extract_osm_objects(
+  key = 'name',
+  value = "River Seine",
+  bbox = paris_box,
+  geom_only = FALSE,
+  return_type = "multipolygon"
+)
+
+# building
+paris_waterway <- extract_osm_objects(
+  key = 'building',
+  bbox = paris_box,
+  geom_only = TRUE
+)
+
+
+paris_map <- osm_basemap(bbox = paris_box, bg = 'gray80') %>%
+  add_osm_objects(obj = paris_park, col = 'forestgreen') %>%
+  add_osm_objects(obj = paris_waterway, col = 'royalblue')
+
+print_osm_map(paris_map)
+
+
+# extract specific building
+extra_pairs <- list(c('addr:street', 'Stamford.St'),
+                    c('addr:housenumber', '150'))
+stamford <- extract_osm_objects(key = 'building',
+                                 extra_pairs = extra_pairs,
+                                 bbox = london_box)
 
 
 # Subplots in map -----------------------------------------------------------------------------
