@@ -1,143 +1,222 @@
 
-# Exampels of grpahs with highcharts. From simple to more advanced with tweaks.
-
 # Packages ------------------------------------------------------------------------------------
 
-library("data.table")
 library("highcharter")
-source("code/highcharts/functions.R")
 
 
-# Column and bar chart data -------------------------------------------------------------------
+# Drilldown -----------------------------------------------------------------------------------
 
-# initial data
-star_wars_raw <- httr::content(httr::GET("http://swapi.co/api/films/?format=json"))
+# drilldown on stacked grouped column chart
 
-# coerce to data frame
-star_wars <- rbindlist(
-  lapply(
-    X = star_wars_raw$results,
-    FUN = function(x){
-      data.table(title = x$title,
-                 characters = length(x$characters),
-                 planets = length(x$planets),
-                 starships = length(x$starships),
-                 species = length(x$species),
-                 release_date = x$release_date)
-    }
-  )
-)
+# data for the first level plot
+elections_2010 <- data.frame(
+  name = c("Republicans", "Democrats", "Others"),
+  y = c(5, 2, 4),
+  drilldown = tolower(paste0(c("Republicans", "Democrats", "Others"), "_elections_2010"))
+) %>%
+  list_parse
+elections_2014 <- data.frame(
+  name = c("Republicans", "Democrats", "Others"),
+  y = c(4, 4, 4),
+  drilldown = tolower(paste0(c("Republicans", "Democrats", "Others"), "_elections_2014"))
+) %>%
+  list_parse
+intentions_2010 <- data.frame(
+  name = c("Republicans", "Democrats", "Others"),
+  y = c(5.5, 2.5, 4.5),
+  drilldown = tolower(paste0(c("Republicans", "Democrats", "Others"), "_intentions_2010"))
+) %>%
+  list_parse
+intentions_2014 <- data.frame(
+  name = c("Republicans", "Democrats", "Others"),
+  y = c(4.5, 4.5, 4.5),
+  drilldown = tolower(paste0(c("Republicans", "Democrats", "Others"), "_intentions_2014"))
+) %>%
+  list_parse
 
-# order by release_date so the movies are in proper order in the graphs
-setorderv(star_wars, cols = "release_date")
+# data for the second level
+republicans_elections_2010 <- data.frame(
+  name = c("East", "West", "North", "South"),
+  y = c(4, 2, 1, 4)
+) %>%
+  list_parse2
+democrats_elections_2010 <- data.frame(
+  name = c("East", "West", "North", "South"),
+  y = c(6, 2, 2, 4)
+) %>%
+  list_parse2
+others_elections_2010 <- data.frame(
+  name = c("East", "West", "North", "South"),
+  y = c(2, 7, 3, 2)
+) %>%
+  list_parse2
+republicans_elections_2014 <- data.frame(
+  name = c("East", "West", "North", "South"),
+  y = c(2, 4, 1, 7)
+) %>%
+  list_parse2
+democrats_elections_2014 <- data.frame(
+  name = c("East", "West", "North", "South"),
+  y = c(4, 2, 5, 3)
+) %>%
+  list_parse2
+others_elections_2014 <- data.frame(
+  name = c("East", "West", "North", "South"),
+  y = c(7, 8, 2, 2)
+) %>%
+  list_parse2
 
+republicans_intentions_2010 <- data.frame(
+  name = c("East", "West", "North", "South"),
+  y = c(4.5, 2.5, 1.5, 4.5)
+) %>%
+  list_parse2
+democrats_intentions_2010 <- data.frame(
+  name = c("East", "West", "North", "South"),
+  y = c(6.5, 2.5, 2.5, 4.5)
+) %>%
+  list_parse2
+others_intentions_2010 <- data.frame(
+  name = c("East", "West", "North", "South"),
+  y = c(2.5, 7.5, 3.5, 2.5)
+) %>%
+  list_parse2
+republicans_intentions_2014 <- data.frame(
+  name = c("East", "West", "North", "South"),
+  y = c(2.5, 4.5, 1.5, 7.5)
+) %>%
+  list_parse2
+democrats_intentions_2014 <- data.frame(
+  name = c("East", "West", "North", "South"),
+  y = c(4.5, 2.5, 5.5, 3.5)
+) %>%
+  list_parse2
+others_intentions_2014 <- data.frame(
+  name = c("East", "West", "North", "South"),
+  y = c(7.5, 8.5, 2.5, 2.5)
+) %>%
+  list_parse2
 
-# Column and bar chart: classic ----------------------------------------------------------------
-
-# grouped columns, user defined colors, axis labels styled, title styled, credits
+# the plot
 highchart() %>%
-  hc_add_series(data = star_wars$species, name = "Species",
-                type = "column", color = "#e5b13a") %>%
-  hc_add_series(data = star_wars$planets, name = "Planets",
-                type = "column", color = "rgba(69, 114, 167, 0.5)") %>%
-  hc_xAxis(categories = star_wars$title,
-           title = list(text = "Movie"),
-           labels = list(rotation = -45,
-                         format = "Movie: {value}",
-                         style = list(fontSize = "12px",
-                                      fontFamily = "Verdana, sans-serif"))) %>%
-  hc_yAxis(title = list(text = "Number")) %>%
-  hc_title(text = "Diversity in <span style=\"color:#e5b13a\">
-           STAR WARS</span> movies",
-           useHTML = TRUE) %>%
-  hc_credits(enabled = TRUE, text = "Source: SWAPI",
-             href = "https://swapi.co/",
-             style = list(fontSize = "12px"))
-
-
-# grouped bar chart, user defined colors, inverted axis, title styled, credits
-highchart() %>%
-  hc_chart(type = "bar") %>%
-  hc_add_series(data = star_wars$species, name = "Species",
-                color = "#e5b13a") %>%
-  hc_add_series(data = star_wars$planets, name = "Planets",
-                color = "rgba(69, 114, 167, 0.5)") %>%
-  hc_xAxis(categories = star_wars$title,
-           title = list(text = "Movie")) %>%
-  hc_yAxis(title = list(text = "Number"),
-           opposite = TRUE,
-           tickInterval = 2) %>%
-  hc_title(text = "Diversity in <span style=\"color:#e5b13a\">
-           STAR WARS</span> movies",
-           useHTML = TRUE) %>%
-  hc_credits(enabled = TRUE, text = "Source: SWAPI",
-             href = "https://swapi.co/",
-             style = list(fontSize = "12px"))
-
-
-# stacked column chart, user defined colors, inverted axis, title styled, credits
-highchart() %>%
-  hc_chart(type = "column") %>%
-  hc_plotOptions(series = list(stacking = "normal")) %>%
-  hc_add_series(data = star_wars$species, name = "Species",
-                color = "#e5b13a") %>%
-  hc_add_series(data = star_wars$planets, name = "Planets",
-                color = "rgba(69, 114, 167, 0.5)") %>%
-  hc_xAxis(categories = star_wars$title,
-           title = list(text = "Movie")) %>%
-  hc_yAxis(title = list(text = "Number")) %>%
-  hc_title(text = "Diversity in <span style=\"color:#e5b13a\">
-           STAR WARS</span> movies",
-           useHTML = TRUE) %>%
-  hc_credits(enabled = TRUE, text = "Source: SWAPI",
-             href = "https://swapi.co/",
-             style = list(fontSize = "12px"))
-
-
-# stacked percent column chart, user defined colors, inverted axis, title styled, credits
-highchart() %>%
-  hc_chart(type = "column") %>%
-  hc_plotOptions(series = list(stacking = "percent")) %>%
-  hc_add_series(data = star_wars$species, name = "Species",
-                color = "#e5b13a") %>%
-  hc_add_series(data = star_wars$planets, name = "Planets",
-                color = "rgba(69, 114, 167, 0.5)") %>%
-  hc_xAxis(categories = star_wars$title,
-           title = list(text = "Movie")) %>%
-  hc_yAxis(title = list(text = "Number")) %>%
-  hc_title(text = "Diversity in <span style=\"color:#e5b13a\">
-           STAR WARS</span> movies",
-           useHTML = TRUE) %>%
-  hc_credits(enabled = TRUE, text = "Source: SWAPI",
-             href = "https://swapi.co/",
-             style = list(fontSize = "12px"))
-
-
-# add multiple series at the same time
-star_wars_series <- toHighchartList(star_wars, by = c("characters", "planets", "starships", "species"))
-
-color <- c("#4AA942", "rgba(69, 114, 167, 0.5)", "#4bd5ee", "#e5b13a")
-star_wars_series <- addArgument(star_wars_series, color)
-
-highchart() %>%
-  hc_chart(type = "column") %>%
-  hc_title(text = "Diversity in <span style=\"color:#e5b13a\">
-           STAR WARS</span> movies",
-           useHTML = TRUE) %>%
-  hc_subtitle(text = "Movies sorted by release date") %>%
-  hc_yAxis(title = list(text = "Number")) %>%
-  hc_xAxis(categories = star_wars$title,
-           title = list(text = "Movie")) %>%
-  hc_plotOptions(column = list(
-    dataLabels = list(enabled = FALSE),
-    stacking = NULL,
-    enableMouseTracking = TRUE)
+  hc_chart(
+    type = 'column'
   ) %>%
-  hc_add_series_list(star_wars_series)
-rm(star_wars_series, color)
+  hc_title(
+    text = 'Highcharts multi-series drilldown'
+  ) %>%
+  hc_xAxis(
+    type = 'category'
+  ) %>%
+  hc_plotOptions(
+    series = list(
+      stacking = 'normal',
+      borderWidth = 0,
+      dataLabels = list(
+        enabled = FALSE
+      )
+    )
+  ) %>%
+  hc_add_series(
+    name = 'elections_2010',
+    data = elections_2010,
+    stack = 'elections'
+  ) %>%
+  hc_add_series(
+    name = 'elections_2014',
+    data = elections_2014,
+    stack = 'elections'
+  ) %>%
+  hc_add_series(
+    name = 'intentions_2010',
+    data = intentions_2010,
+    stack = 'intentions'
+  ) %>%
+  hc_add_series(
+    name = 'intentions_2014',
+    data = intentions_2014,
+    stack = 'intentions'
+  ) %>%
+  hc_drilldown(
+    allowPointDrilldown = FALSE,
+    series = list(
+      list(
+        id = 'republicans_elections_2010',
+        name = 'Republican 2010',
+        data = republicans_elections_2010,
+        stack = 'elections'
+      ),
+      list(
+        id = 'democrats_elections_2010',
+        name = 'Republican 2010',
+        data = democrats_elections_2010,
+        stack = 'elections'
+      ),
+      list(
+        id = 'others_elections_2010',
+        name = 'Other 2010',
+        data = others_elections_2010,
+        stack = 'elections'
+      ),
+      list(
+        id = 'republicans_elections_2014',
+        name = 'Republican 2014',
+        data = republicans_elections_2014,
+        stack = 'elections'
+      ),
+      list(
+        id = 'democrats_elections_2014',
+        name = 'Democrats 2014',
+        data = democrats_elections_2014,
+        stack = 'elections'
+      ),
+      list(
+        id = 'others_elections_2014',
+        name ='Other 2014',
+        data = others_elections_2014,
+        stack = 'elections'
+      ),
+      # stack intentions
+      list(
+        id = 'republicans_intentions_2010',
+        name = 'Republican 2010',
+        data = republicans_intentions_2010,
+        stack = 'intentions'
+      ),
+      list(
+        id = 'democrats_intentions_2010',
+        name = 'Republican 2010',
+        data = democrats_intentions_2010,
+        stack = 'intentions'
+      ),
+      list(
+        id = 'others_intentions_2010',
+        name = 'Other 2010',
+        data = others_intentions_2010,
+        stack = 'intentions'
+      ),
+      list(
+        id = 'republicans_intentions_2014',
+        name = 'Republican 2014',
+        data = republicans_intentions_2014,
+        stack = 'intentions'
+      ),
+      list(
+        id = 'democrats_intentions_2014',
+        name = 'Democrats 2014',
+        data = democrats_intentions_2014,
+        stack = 'intentions'
+      ),
+      list(
+        id = 'others_intentions_2014',
+        name ='Other 2014',
+        data = others_intentions_2014,
+        stack = 'intentions'
+      )
+    )
+  )
 
-
-# drilldown chart
+# drilldown chart : not working
 
 # add diversity level to then drill down to specific categories (planets, ...)
 star_wars[, diversity := sum(.SD), by = title, .SDcols = c("characters", "planets", "starships", "species")]
@@ -232,7 +311,8 @@ highchart() %>%
     )
   )
 
-# Population pyramid
+
+# Population pyramid : not working
 highchart() %>%
   hc_title(text = "Population pyramid") %>%
   hc_chart(type = "bar") %>%
@@ -250,7 +330,11 @@ highchart() %>%
     list(
       opposite = TRUE,
       reversed = FALSE,
-      categories = categories,
+      categories = c('0-4', '5-9', '10-14', '15-19',
+                     '20-24', '25-29', '30-34', '35-39', '40-44',
+                     '45-49', '50-54', '55-59', '60-64', '65-69',
+                     '70-74', '75-79', '80-84', '85-89', '90-94',
+                     '95-99', '100 + '),
       linkedTo = 0,
       labels = list(step = 1)
     )
@@ -375,10 +459,7 @@ highchart() %>%
   )
 
 
-# column range
-
-
-
+# column range : not working
 highchart() %>%
   hc_chart(
     type = 'columnrange',
@@ -439,22 +520,6 @@ highchart() %>%
   )
 
 
-setNames(as.data.frame(rbind(
-  c(-9.7, 9.4),
-  c(-8.7, 6.5),
-  c(-3.5, 9.4),
-  c(-1.4, 19.9),
-  c(0.0, 22.6),
-  c(2.9, 29.5),
-  c(9.2, 30.7),
-  c(7.3, 26.5),
-  c(4.4, 18.0),
-  c(-3.1, 11.4),
-  c(-5.2, 10.4),
-  c(-13.5, 9.8)
-)), c("low", "high"))
-
-
 # Pie chart with predefined labels ------------------------------------------------------------
 
 data_plot <- data.table(name = letters[1:5],
@@ -464,13 +529,49 @@ data_plot <- data.table(name = letters[1:5],
 highchart() %>%
   hc_chart(type = "pie") %>%
   hc_add_series(data = data_plot,
-                dataLabels = list(format = "{point.y} ({point.labels} N-1)"),
+                dataLabels = list(format = "{point.y} (vs {point.labels} N-1)"),
                 enabled = TRUE) %>%
   hc_plotOptions(pie = list(showInLegend = TRUE))
 
 
-# Funnel plot bubble like  ------------------------------------------------------------------
+# Custom funnel plot --------------------------------------------------------------------------
 
+# area range
+plot_data <- data.frame(
+  name = paste0("Step_", 1:5),
+  low = c(20, 30, 45, 55, 65),
+  high = c(120, 110, 95, 85, 75),
+  color = c("#d35400", "#2980b9", "#2ecc71", "#f1c40f", "#2c3e50")
+) %>%
+  list_parse
+
+
+highchart() %>%
+  hc_chart(type = 'arearange') %>%
+  hc_add_series(
+    name = "funnel",
+    data = list(
+      list(
+      x = 1,
+      low = 7,
+      high = 8,
+      fillColor = "red"
+    ),
+    list(
+      x = 2,
+      low = 6,
+      high = 7,
+      fillColor = "blue"
+    )
+    )
+  )
+
+
+
+
+
+
+# with bubble
 data_plot <- data.table(name = paste0("step", 1:3),
                         x = 0:2,
                         y = 1,
