@@ -1,2 +1,2 @@
 # Visualization
-Examples of highcharts graphs 
+Graphs with highcharts and maps
