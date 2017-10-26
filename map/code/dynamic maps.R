@@ -141,8 +141,8 @@ leaflet(data = quakes1) %>% addTiles() %>%
 # ... with really different parameters
 # Make a list of icons. We'll index into it based on name.
 oceanIcons <- iconList(
-  ship = makeIcon(iconUrl = "input/ferry.png", iconWidth = 18, iconHeight = 18),
-  pirate = makeIcon(iconUrl = "input/pirate.png", iconWidth = 24, iconHeight = 24)
+  ship = makeIcon(iconUrl = "map/input/ferry.png", iconWidth = 18, iconHeight = 18),
+  pirate = makeIcon(iconUrl = "map/input/pirate.png", iconWidth = 24, iconHeight = 24)
 )
 # Some fake data
 df <- sp::SpatialPointsDataFrame(
@@ -271,7 +271,7 @@ leaflet() %>%
 
 # data
 # From https://www.census.gov/geo/maps-data/data/cbf/cbf_state.html
-states <- readOGR("input/cb_2016_us_state_20m.shp",
+states <- readOGR("map/input/cb_2016_us_state_20m.shp",
                   layer = "cb_2013_us_state_20m", GDAL1_integer64_policy = TRUE)
 neStates <- subset(states, states$STUSPS %in% c(
   "CT","ME","MA","NH","RI","VT","NY","NJ","PA"

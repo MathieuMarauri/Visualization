@@ -51,4 +51,4 @@ palette_maker <- function(image_path, number_of_colors = 10){
   return(colours_vector)
 }
 
-palette_maker(image_path = 'input/logo bouygue.png', number_of_colors = 4)
+palette_maker(image_path = 'general/input/logo bouygue.png', number_of_colors = 4)

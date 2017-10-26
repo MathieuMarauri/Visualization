@@ -9,7 +9,7 @@ library('data.table')
 
 # Data --------------------------------------------------------------------
 
-browser <- readRDS('input/browser.rds')
+browser <- readRDS('chart/input/browser.rds')
 
 # level1
 level1 <- browser[, .(y = sum(data)), by = name]

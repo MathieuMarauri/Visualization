@@ -20,7 +20,7 @@ import::from("magrittr", "%>%")
 data(wrld_simpl, package = "maptools")
 
 # data for cities: http://simplemaps.com/data/world-cities
-cities <- fread('input/simplemaps-worldcities-basic.csv')
+cities <- fread('map/input/simplemaps-worldcities-basic.csv')
 cities <- cities[order(-pop), ][1:100, ]
 
 # fortify the spatial polygon to a data frame by ISO2
@@ -110,11 +110,11 @@ rm(population, world, wrld_simpl)
 # French map  ---------------------------------------------------------------------------------
 
 # Population by department
-population_dt <- fread("input/repartition_departement.csv",
+population_dt <- fread("map/input/repartition_departement.csv",
                        sep = ";")
 
 # shape file of french department
-shape_sdf <- readRDS("input/FRA_adm2.rds")
+shape_sdf <- readRDS("map/input/FRA_adm2.rds")
 shape_df <- fortify(shape_sdf,
                     region = "NAME_2")
 
@@ -173,11 +173,11 @@ rm(plot, shape_df, departement_centroid_df, population_dt, shape_sdf)
 # Paris region map with image -----------------------------------------------------------------
 
 # Population by department
-population_dt <- fread("input/repartition_departement.csv",
+population_dt <- fread("map/input/repartition_departement.csv",
                        sep = ";")
 
 # shape file of french department
-shape_sdf <- readRDS("input/FRA_adm2.rds")
+shape_sdf <- readRDS("map/input/FRA_adm2.rds")
 shape_df <- fortify(shape_sdf,
                     region = "NAME_2")
 
@@ -199,7 +199,7 @@ shape_idf_df <- setDT(shape_df)[code %in% c(75, 77, 78, 91, 92, 93, 94, 95), ]
 idf_centroid_df <- setDT(departement_centroid_df)[CCA_2 %in% c(75, 77, 78, 91, 92, 93, 94, 95), ]
 
 # image instead of point
-img <-  png::readPNG('input/eiffel_tower.png')
+img <-  png::readPNG('map/input/eiffel_tower.png')
 img <- grid::rasterGrob(img, interpolate = TRUE)
 
 # initialization of the map, the group argument removes the lines connecting points  that are not to be connected
@@ -241,7 +241,7 @@ rm(shape_idf_df, idf_centroid_df, img, shape_df, departement_centroid_df, popula
 
 # Density map ---------------------------------------------------------------------------------
 
-data_map <- fread('input/vilnius_point.csv')
+data_map <- fread('map/input/vilnius_point.csv')
 
 map <- ggmap::get_map(location = "Vilnius",
                       zoom = 14,
