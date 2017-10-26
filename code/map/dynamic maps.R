@@ -7,6 +7,7 @@
 library('leaflet')
 library('sp')
 library('maps')
+library('rgdal')
 
 
 # Basic map ---------------------------------------------------------------
@@ -267,3 +268,22 @@ leaflet() %>%
 # Lines and shapes --------------------------------------------------------
 
 # https://rstudio.github.io/leaflet/shapes.html
+
+# data
+# From https://www.census.gov/geo/maps-data/data/cbf/cbf_state.html
+states <- readOGR("input/cb_2016_us_state_20m.shp",
+                  layer = "cb_2013_us_state_20m", GDAL1_integer64_policy = TRUE)
+neStates <- subset(states, states$STUSPS %in% c(
+  "CT","ME","MA","NH","RI","VT","NY","NJ","PA"
+))
+
+leaflet(neStates) %>%
+  addPolygons(color = "#444444", weight = 1, smoothFactor = 0.5,
+              opacity = 1.0, fillOpacity = 0.5,
+              fillColor = ~colorQuantile("YlOrRd", ALAND)(ALAND),
+              highlightOptions = highlightOptions(color = "white", weight = 2,
+                                                  bringToFront = TRUE))
+
+
+
+
