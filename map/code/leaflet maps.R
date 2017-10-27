@@ -8,6 +8,8 @@ library('leaflet')
 library('sp')
 library('maps')
 library('rgdal')
+library('spdplyr')
+library('data.table')
 
 
 # Basic map ---------------------------------------------------------------
@@ -211,7 +213,8 @@ content <- paste(sep = "<br/>",
                  "Seattle, WA 98138"
 )
 
-leaflet() %>% addTiles() %>%
+leaflet() %>%
+  addTiles() %>%
   addPopups(-122.327298, 47.597131, content,
             options = popupOptions(closeButton = FALSE)
   )
@@ -224,11 +227,13 @@ Kukai Ramen,47.6154,-122.327157
 Tsukushinbo,47.59987,-122.326726"
 ))
 
-leaflet(df) %>% addTiles() %>%
+leaflet(df) %>%
+  addTiles() %>%
   addMarkers(~Long, ~Lat, popup = ~htmltools::htmlEscape(Name))
 
 # labels
-leaflet(df) %>% addTiles() %>%
+leaflet(df) %>%
+  addTiles() %>%
   addMarkers(~Long, ~Lat, label = ~htmltools::htmlEscape(Name))
 
 # customizing marker label
@@ -269,10 +274,10 @@ leaflet() %>%
 
 # https://rstudio.github.io/leaflet/shapes.html
 
-# data
-# From https://www.census.gov/geo/maps-data/data/cbf/cbf_state.html
-states <- readOGR("map/input/cb_2016_us_state_20m.shp",
-                  layer = "cb_2013_us_state_20m", GDAL1_integer64_policy = TRUE)
+# data from https://www.census.gov/geo/maps-data/data/cbf/cbf_state.html
+states <- readOGR(dsn = "map/input/cb_2016_us_state_20m/cb_2016_us_state_20m.shp",
+                  layer = "cb_2016_us_state_20m",
+                  GDAL1_integer64_policy = TRUE)
 neStates <- subset(states, states$STUSPS %in% c(
   "CT","ME","MA","NH","RI","VT","NY","NJ","PA"
 ))
@@ -284,6 +289,112 @@ leaflet(neStates) %>%
               highlightOptions = highlightOptions(color = "white", weight = 2,
                                                   bringToFront = TRUE))
 
+# circles
+cities <- read.csv(textConnection("
+City,Lat,Long,Pop
+Boston,42.3601,-71.0589,645966
+Hartford,41.7627,-72.6743,125017
+New York City,40.7127,-74.0059,8406000
+Philadelphia,39.9500,-75.1667,1553000
+Pittsburgh,40.4397,-79.9764,305841
+Providence,41.8236,-71.4222,177994
+"))
 
+leaflet(cities) %>% addTiles() %>%
+  addCircles(lng = ~Long, lat = ~Lat, weight = 1,
+             radius = ~sqrt(Pop) * 30, popup = ~City
+  )
+
+# rectangles
+leaflet() %>% addTiles() %>%
+  addRectangles(
+    lng1=-118.456554, lat1=34.078039,
+    lng2=-118.436383, lat2=34.062717,
+    fillColor = "transparent"
+  )
+
+
+# GeoJSOn and TopoJSON ----------------------------------------------------
+
+# https://rstudio.github.io/leaflet/json.html
+
+# data from http://eric.clst.org/Stuff/USGeoJSON
+uscounties <- geojsonio::geojson_read("map/input/uscounties.geojson",
+                                      what = "sp")
+
+# filter on only ny county
+nycounties <- uscounties %>% filter(STATE == 36)
+rm(uscounties)
+
+# counties population from
+# https://en.wikipedia.org/wiki/List_of_United_States_counties_and_county_equivalents
+counties_pop <- fread(file = 'map/input/counties_pop.csv')
+counties_pop <- counties_pop[`State or district` == 'New York',
+                             .(county_name = stringi::stri_replace_all_fixed(str = `County or equivalent`,
+                                                                             pattern = ' County',
+                                                                             replacement = ''),
+                               pop = as.numeric(stringi::stri_replace_all_fixed(str = `2013 Pop`,
+                                                                                pattern = ',',
+                                                                                replacement = '')))]
+
+nycounties@data <- merge(x = nycounties@data,
+                         y = counties_pop,
+                         by.x = 'NAME',
+                         by.y = 'county_name')
+
+pal <- colorNumeric("viridis", NULL)
+
+leaflet(nycounties) %>%
+  addTiles() %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+              fillColor = ~pal(log10(pop))
+              # label = ~paste0(NAME, ": ", formatC(pop, big.mark = ","))
+              ) %>%
+  addLegend(pal = pal, values = ~log10(pop), opacity = 1.0,
+            labFormat = labelFormat(transform = function(x) round(10^x)))
+
+
+# Choropleths -------------------------------------------------------------
+
+# From http://leafletjs.com/examples/choropleth/us-states.js
+states <- geojsonio::geojson_read("map/input/us-states.geojson", what = "sp")
+
+bins <- c(0, 10, 20, 50, 100, 200, 500, 1000, Inf)
+pal <- colorBin("YlOrRd", domain = states$density, bins = bins)
+
+labels <- sprintf(
+  "<strong>%s</strong><br/>%g people / mi<sup>2</sup>",
+  states$name, states$density
+) %>% lapply(htmltools::HTML)
+
+leaflet(
+  data = states,
+  options = leafletOptions(zoomControl = FALSE,
+                           minZoom = 4, maxZoom = 4,
+                           dragging = FALSE)
+  ) %>%
+  setView(-96, 37.8, 4) %>%
+  setMaxBounds(lng1 = -120, lng2 = -80, lat1 = 30, lat2 = 45) %>%
+  addTiles() %>%
+  addPolygons(
+    fillColor = ~ pal(density),
+    weight = 2,
+    opacity = 1,
+    color = "white",
+    dashArray = "3",
+    fillOpacity = 0.7,
+    highlight = highlightOptions(
+      weight = 5,
+      color = "#666",
+      dashArray = "",
+      fillOpacity = 0.7,
+      bringToFront = TRUE),
+    label = labels,
+    labelOptions = labelOptions(
+      style = list("font-weight" = "normal", padding = "3px 8px"),
+      textsize = "15px",
+      direction = "auto")) %>%
+  addLegend(pal = pal, values = ~density, opacity = 0.7, title = NULL,
+            position = "bottomright")
 
 
