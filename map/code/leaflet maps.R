@@ -1,6 +1,7 @@
 
 # Leaflet maps from : https://rstudio.github.io/leaflet/
 # everything is explained with more details on the github page
+# Examples of french map
 
 # Packages ----------------------------------------------------------------
 
@@ -18,6 +19,9 @@ m <- leaflet() %>%
   addTiles() %>%  # Add default OpenStreetMap map tiles
   addMarkers(lng = 174.768, lat = -36.852, popup = "The birthplace of R")
 m  # Print the map
+
+# clean session
+rm(m)
 
 
 # The map widget ----------------------------------------------------------
@@ -66,6 +70,9 @@ m <- leaflet(df) %>% addTiles()
 m %>% addCircleMarkers(radius = ~size, color = ~color, fill = FALSE)
 m %>% addCircleMarkers(radius = runif(100, 4, 10), color = c('red'))
 
+# clean session
+rm(df, Sr1, Sr2, Sr3, Sr4, Srs1, Srs2, Srs3, SpP, mapStates, m)
+
 
 # Using basemaps ----------------------------------------------------------
 
@@ -97,6 +104,9 @@ m %>% addProviderTiles(providers$MtbMap) %>%
   addProviderTiles(providers$Stamen.TonerLines,
                    options = providerTileOptions(opacity = 0.35)) %>%
   addProviderTiles(providers$Stamen.TonerLabels)
+
+# clean session
+rm(m)
 
 
 # Markers -----------------------------------------------------------------
@@ -201,6 +211,9 @@ leaflet(df) %>% addTiles() %>%
     stroke = FALSE, fillOpacity = 0.5
   )
 
+# clean session
+rm(quakes, greenLeafIcon, quakes1, oceanIcons, df, df.20, getCOlor, icons, pal)
+
 
 # Popups and labels -------------------------------------------------------
 
@@ -269,6 +282,9 @@ leaflet() %>%
     )
   )
 
+# clean session
+rm(content, df)
+
 
 # Lines and shapes --------------------------------------------------------
 
@@ -313,6 +329,9 @@ leaflet() %>% addTiles() %>%
     fillColor = "transparent"
   )
 
+# clean session
+rm(states, neStates, cities)
+
 
 # GeoJSOn and TopoJSON ----------------------------------------------------
 
@@ -352,6 +371,9 @@ leaflet(nycounties) %>%
               ) %>%
   addLegend(pal = pal, values = ~log10(pop), opacity = 1.0,
             labFormat = labelFormat(transform = function(x) round(10^x)))
+
+# clean session
+rm(nycounties, counties_pop, pal)
 
 
 # Choropleths -------------------------------------------------------------
@@ -397,4 +419,77 @@ leaflet(
   addLegend(pal = pal, values = ~density, opacity = 0.7, title = NULL,
             position = "bottomright")
 
+# clean session
+rm(states, bins, pal, labels)
 
+
+# French pop map ----------------------------------------------------------
+
+# french departments polygons data
+departments <- readRDS('map/input/FRA_adm2.rds')
+
+# filter out useless columns
+departments@data <- departments@data[, c('OBJECTID', 'ID_1', 'NAME_1',
+                                         'ID_2', 'NAME_2', 'CCA_2')]
+
+# department population
+population <- fread("map/input/repartition_departement.csv",
+                    sep = ";")
+population <- population[, .(code, departement, pop_totale)]
+
+departments@data <- merge(x = departments@data,
+                          y = population,
+                          by.x = "CCA_2",
+                          by.y = "code",
+                          all.x = TRUE,
+                          sort = FALSE)
+
+# create the palette for the population
+pal <- colorBin(palette = "YlOrRd", domain = departments@data$pop_totale, bins = 7)
+
+# labels for the popup
+labels <- sprintf(
+  "<strong>%s</strong><br/> population: %g",
+  departments@data$NAME_2, departments@data$pop_totale
+) %>% lapply(htmltools::HTML)
+
+# map
+leaflet(
+  data = departments,
+  options = leafletOptions(zoomControl = FALSE,
+                           minZoom = 6, maxZoom = 8,
+                           dragging = FALSE)
+) %>%
+  # setView(lng = 2.4, lat = 47.5, zoom = 6) %>%
+  addProviderTiles(providers$Esri.WorldGrayCanvas) %>%
+  fitBounds(lng1 = -4.99, lng2 = 9.19, lat1 = 42.28, lat2 = 51.25) %>%
+  # addTiles() %>%
+  addPolygons(
+    fillColor = ~ pal(pop_totale),
+    weight = 1,
+    opacity = 1,
+    color = "white",
+    dashArray = "3",
+    fillOpacity = 0.7,
+    highlight = highlightOptions(
+      weight = 5,
+      color = "#666",
+      dashArray = "",
+      fillOpacity = 0.7,
+      bringToFront = TRUE),
+    label = labels,
+    labelOptions = labelOptions(
+      style = list('font-weight' = "normal", 'padding' = "3px 8px"),
+      textsize = "15px",
+      direction = "auto")
+  ) %>%
+  addLegend(
+    pal = pal,
+    values = ~ pop_totale,
+    opacity = 0.7,
+    title = NULL,
+    position = "bottomright"
+  )
+
+# clean session
+rm(departments, population, pal, labels)
